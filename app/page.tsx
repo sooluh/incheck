@@ -1,95 +1,119 @@
-"use client";
+'use client'
 
-import { useState, useEffect } from "react";
-import { Card } from "@/components/ui/card";
-import toast from "react-hot-toast";
+import { useState, useEffect } from 'react'
+import { Card } from '@/components/ui/card'
+import toast from 'react-hot-toast'
 
 interface ChecklistItem {
-  id: string;
-  name: string;
-  type: string;
-  value: "checked" | "";
-  doctype: string;
-  mandatory: string;
-  [key: string]: string;
+  id: string
+  name: string
+  type: string
+  value: 'checked' | ''
+  doctype: string
+  mandatory: string
+  [key: string]: string
 }
 
-const DEFAULT_CHECKLISTS: ChecklistItem[][] = [[], [], []];
+const DEFAULT_CHECKLISTS: ChecklistItem[][] = [[], [], []]
 
 export default function Home() {
-  const [isDark, setIsDark] = useState(false);
-  const [inputs, setInputs] = useState<string[]>(["", "", ""]);
-  const [checklists, setChecklists] =
-    useState<ChecklistItem[][]>(DEFAULT_CHECKLISTS);
+  const [isDark, setIsDark] = useState(false)
+  const [inputs, setInputs] = useState<string[]>(['', '', ''])
+  const [checklists, setChecklists] = useState<ChecklistItem[][]>(DEFAULT_CHECKLISTS)
+  const [errors, setErrors] = useState<(string | null)[]>([null, null, null])
 
   useEffect(() => {
-    const isDarkMode = document.documentElement.classList.contains("dark");
-    setIsDark(isDarkMode);
-  }, []);
+    const isDarkMode = document.documentElement.classList.contains('dark')
+    setIsDark(isDarkMode)
+  }, [])
 
   const toggleDarkMode = () => {
-    const html = document.documentElement;
-    html.classList.toggle("dark");
-    setIsDark(!isDark);
-    localStorage.setItem("theme", !isDark ? "dark" : "light");
-  };
+    const html = document.documentElement
+    html.classList.toggle('dark')
+    setIsDark(!isDark)
+    localStorage.setItem('theme', !isDark ? 'dark' : 'light')
+  }
+
+  const parseJSON = (value: string): { data: ChecklistItem[]; error: string | null } => {
+    if (!value || !value.trim()) {
+      return { data: [], error: null }
+    }
+
+    try {
+      const parsed = JSON.parse(value)
+
+      if (!Array.isArray(parsed)) {
+        return { data: [], error: 'JSON must be an array' }
+      }
+
+      return { data: parsed, error: null }
+    } catch (e) {
+      const errorMsg = e instanceof Error ? e.message : 'Invalid JSON'
+
+      return { data: [], error: errorMsg }
+    }
+  }
 
   const handleInputChange = (index: number, value: string) => {
     setInputs((prev) => {
-      const updated = [...prev];
-      updated[index] = value;
-      return updated;
-    });
+      const updated = [...prev]
+      updated[index] = value
 
-    try {
-      const parsed = JSON.parse(value) as ChecklistItem[];
-      setChecklists((prev) => {
-        const updated = [...prev];
-        updated[index] = parsed;
-        return updated;
-      });
-    } catch (e) {}
-  };
+      return updated
+    })
+
+    const { data, error } = parseJSON(value)
+
+    setChecklists((prev) => {
+      const updated = [...prev]
+      updated[index] = data
+
+      return updated
+    })
+
+    setErrors((prev) => {
+      const updated = [...prev]
+      updated[index] = error
+
+      return updated
+    })
+  }
 
   const handleToggleItem = (listIndex: number, itemIndex: number) => {
     setChecklists((prev) => {
-      const updated = [...prev];
-      const newValue =
-        updated[listIndex][itemIndex].value === "checked" ? "" : "checked";
+      const updated = [...prev]
+      const newValue = updated[listIndex][itemIndex].value === 'checked' ? '' : 'checked'
+
       updated[listIndex][itemIndex] = {
         ...updated[listIndex][itemIndex],
         value: newValue,
-      };
+      }
 
       setInputs((prevInputs) => {
-        const updatedInputs = [...prevInputs];
-        updatedInputs[listIndex] = JSON.stringify(updated[listIndex], null, 2);
-        return updatedInputs;
-      });
+        const updatedInputs = [...prevInputs]
+        updatedInputs[listIndex] = JSON.stringify(updated[listIndex], null, 2)
 
-      return updated;
-    });
-  };
+        return updatedInputs
+      })
+
+      return updated
+    })
+  }
 
   const handleCopyJSON = (checklist: ChecklistItem[]) => {
-    navigator.clipboard.writeText(JSON.stringify(checklist));
-    toast.success("Checklist Copied!");
-  };
+    navigator.clipboard.writeText(JSON.stringify(checklist))
+    toast.success('Checklist JSON Copied!')
+  }
 
-  const maxLength = Math.max(
-    checklists[0].length,
-    checklists[1].length,
-    checklists[2].length,
-  );
+  const maxLength = Math.max(checklists[0].length, checklists[1].length, checklists[2].length)
 
   return (
     <main className="min-h-screen bg-background p-8 transition-colors duration-200">
-      <div className="max-w-7xl mx-auto">
+      <div className="mx-auto max-w-7xl">
         <div className="mb-8 flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-foreground mb-2">
-              SDA Checklist Manager
-            </h1>
+            <h1 className="mb-2 text-3xl font-bold text-foreground">SDA Checklist Manager</h1>
+
             <p className="text-muted-foreground">
               Paste JSON checklist data, toggle items, and see real-time output
             </p>
@@ -97,117 +121,89 @@ export default function Home() {
 
           <button
             onClick={toggleDarkMode}
-            className="px-4 py-2 rounded bg-muted hover:bg-muted/80 text-foreground transition-colors cursor-pointer"
+            className="rounded bg-muted px-4 py-2 text-foreground transition-colors hover:bg-muted/80"
             aria-label="Toggle dark mode"
           >
-            {isDark ? "☀️ Light" : "🌙 Dark"}
+            {isDark ? '☀️ Light' : '🌙 Dark'}
           </button>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          <div className="flex flex-col gap-3">
-            <h2 className="text-lg font-semibold text-foreground">
-              Checklist 1 Input
-            </h2>
+        <div className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
+          {[0, 1, 2].map((index) => (
+            <div key={index} className="flex flex-col gap-2">
+              <h2 className="text-lg font-semibold text-foreground">Checklist {index + 1} Input</h2>
 
-            <textarea
-              value={inputs[0]}
-              onChange={(e) => handleInputChange(0, e.target.value)}
-              className="flex-1 p-3 bg-background border border-border rounded font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary min-h-32 text-foreground"
-              placeholder="Paste JSON array here..."
-            />
-          </div>
+              <textarea
+                value={inputs[index]}
+                onChange={(e) => handleInputChange(index, e.target.value)}
+                className={`min-h-32 flex-1 resize-none rounded border bg-background p-3 font-mono text-sm text-foreground focus:ring-2 focus:outline-none ${
+                  errors[index]
+                    ? 'border-destructive focus:ring-destructive'
+                    : 'border-border focus:ring-primary'
+                }`}
+                placeholder="Paste JSON array here..."
+              />
 
-          <div className="flex flex-col gap-3">
-            <h2 className="text-lg font-semibold text-foreground">
-              Checklist 2 Input
-            </h2>
-
-            <textarea
-              value={inputs[1]}
-              onChange={(e) => handleInputChange(1, e.target.value)}
-              className="flex-1 p-3 bg-background border border-border rounded font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary min-h-32 text-foreground"
-              placeholder="Paste JSON array here..."
-            />
-          </div>
-
-          <div className="flex flex-col gap-3">
-            <h2 className="text-lg font-semibold text-foreground">
-              Checklist 3 Input
-            </h2>
-
-            <textarea
-              value={inputs[2]}
-              onChange={(e) => handleInputChange(2, e.target.value)}
-              className="flex-1 p-3 bg-background border border-border rounded font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary min-h-32 text-foreground"
-              placeholder="Paste JSON array here..."
-            />
-          </div>
+              {errors[index] && (
+                <p className="font-mono text-xs text-destructive">{errors[index]}</p>
+              )}
+            </div>
+          ))}
         </div>
 
         <div className="mb-8">
-          <h2 className="text-2xl font-bold text-foreground mb-4">
-            Checklist Items
-          </h2>
+          <h2 className="mb-4 text-2xl font-bold text-foreground">Checklist Items</h2>
 
-          <div className="border border-border rounded overflow-hidden">
+          <div className="overflow-hidden rounded border border-border">
             <div className="grid grid-cols-3">
-              <div className="bg-muted/50 p-4 border-r border-border font-semibold text-foreground">
+              <div className="border-r border-border bg-muted/50 p-4 font-semibold text-foreground">
                 Checklist 1
               </div>
-              <div className="bg-muted/50 p-4 border-r border-border font-semibold text-foreground">
+
+              <div className="border-r border-border bg-muted/50 p-4 font-semibold text-foreground">
                 Checklist 2
               </div>
-              <div className="bg-muted/50 p-4 font-semibold text-foreground">
-                Checklist 3
-              </div>
+
+              <div className="bg-muted/50 p-4 font-semibold text-foreground">Checklist 3</div>
             </div>
 
             {Array.from({ length: maxLength }).map((_, rowIndex) => (
-              <div
-                key={rowIndex}
-                className="grid grid-cols-3 border-t border-border"
-              >
+              <div key={rowIndex} className="grid grid-cols-3 border-t border-border">
                 {checklists.map((checklist, colIndex) => {
-                  const item = checklist[rowIndex];
+                  const item = checklist[rowIndex]
 
                   return (
                     <div
                       key={`${colIndex}-${rowIndex}`}
-                      className={`p-4 flex items-center gap-3 ${colIndex < 2 ? "border-r border-border" : ""}`}
+                      className={`flex items-center gap-3 p-4 ${colIndex < 2 ? 'border-r border-border' : ''}`}
                     >
                       {item ? (
                         <>
                           <input
                             type="checkbox"
                             id={`item-${colIndex}-${item.id}`}
-                            checked={item.value === "checked"}
-                            onChange={() =>
-                              handleToggleItem(colIndex, rowIndex)
-                            }
-                            className="w-5 h-5 rounded border-border cursor-pointer"
+                            checked={item.value === 'checked'}
+                            onChange={() => handleToggleItem(colIndex, rowIndex)}
+                            className="h-5 w-5 cursor-pointer rounded border-border"
                           />
 
                           <label
                             htmlFor={`item-${colIndex}-${item.id}`}
-                            className="flex-1 text-foreground cursor-pointer flex items-center gap-2 min-w-0"
+                            className="flex min-w-0 flex-1 cursor-pointer items-center gap-2 text-foreground"
                           >
                             <span className="truncate">{item.name}</span>
-
-                            {item.mandatory === "yes" && (
-                              <span className="text-xs bg-destructive text-white px-2 py-1 rounded">
+                            {!!item.mandatory?.trim() && (
+                              <span className="rounded bg-destructive px-2 py-1 text-xs text-white">
                                 Required
                               </span>
                             )}
                           </label>
                         </>
                       ) : (
-                        <span className="text-muted-foreground text-sm italic">
-                          -
-                        </span>
+                        <span className="text-sm text-muted-foreground italic">-</span>
                       )}
                     </div>
-                  );
+                  )
                 })}
               </div>
             ))}
@@ -215,27 +211,22 @@ export default function Home() {
         </div>
 
         <div className="mb-8">
-          <h2 className="text-2xl font-bold text-foreground mb-4">
-            JSON Output
-          </h2>
+          <h2 className="mb-4 text-2xl font-bold text-foreground">JSON Output</h2>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
             {checklists.map((checklist, listIndex) => (
-              <Card
-                key={`output-${listIndex}`}
-                className="p-6 bg-muted/30 gap-3"
-              >
+              <Card key={`output-${listIndex}`} className="gap-3 bg-muted/30 p-6">
                 <h3 className="text-sm font-semibold text-foreground">
                   Checklist {listIndex + 1} Output
                 </h3>
 
-                <pre className="bg-background p-3 rounded border border-border overflow-auto max-h-48 text-xs font-mono text-foreground">
+                <pre className="max-h-48 overflow-auto rounded border border-border bg-background p-3 font-mono text-xs text-foreground">
                   {JSON.stringify(checklist)}
                 </pre>
 
                 <button
                   onClick={() => handleCopyJSON(checklist)}
-                  className="w-full px-3 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90 transition-colors text-sm cursor-pointer"
+                  className="w-full rounded bg-primary px-3 py-2 text-sm text-primary-foreground transition-colors hover:bg-primary/90"
                 >
                   Copy JSON
                 </button>
@@ -245,5 +236,5 @@ export default function Home() {
         </div>
       </div>
     </main>
-  );
+  )
 }
