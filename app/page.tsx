@@ -127,7 +127,7 @@ export default function Home() {
 
           <button
             onClick={toggleDarkMode}
-            className="rounded bg-muted px-4 py-2 text-foreground transition-colors hover:bg-muted/80"
+            className="cursor-pointer rounded bg-muted px-4 py-2 text-foreground transition-colors hover:bg-muted/80"
             aria-label="Toggle dark mode"
           >
             {isDark ? '☀️ Light' : '🌙 Dark'}
@@ -232,7 +232,7 @@ export default function Home() {
 
                 <button
                   onClick={() => handleCopyJSON(checklist)}
-                  className="w-full rounded bg-primary px-3 py-2 text-sm text-primary-foreground transition-colors hover:bg-primary/90"
+                  className="w-full cursor-pointer rounded bg-primary px-3 py-2 text-sm text-primary-foreground transition-colors hover:bg-primary/90"
                 >
                   Copy JSON
                 </button>
