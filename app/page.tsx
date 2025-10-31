@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Card } from '@/components/ui/card'
 import toast from 'react-hot-toast'
 
@@ -17,21 +17,27 @@ interface ChecklistItem {
 const DEFAULT_CHECKLISTS: ChecklistItem[][] = [[], [], []]
 
 export default function Home() {
-  const [isDark, setIsDark] = useState(false)
+  const [isDark, setIsDark] = useState<boolean>(() => {
+    if (typeof document !== 'undefined') {
+      return document.documentElement.classList.contains('dark')
+    }
+    return false
+  })
+
   const [inputs, setInputs] = useState<string[]>(['', '', ''])
   const [checklists, setChecklists] = useState<ChecklistItem[][]>(DEFAULT_CHECKLISTS)
   const [errors, setErrors] = useState<(string | null)[]>([null, null, null])
 
-  useEffect(() => {
-    const isDarkMode = document.documentElement.classList.contains('dark')
-    setIsDark(isDarkMode)
-  }, [])
-
   const toggleDarkMode = () => {
     const html = document.documentElement
     html.classList.toggle('dark')
-    setIsDark(!isDark)
-    localStorage.setItem('theme', !isDark ? 'dark' : 'light')
+
+    setIsDark((prev) => {
+      const next = !prev
+      localStorage.setItem('theme', next ? 'dark' : 'light')
+
+      return next
+    })
   }
 
   const parseJSON = (value: string): { data: ChecklistItem[]; error: string | null } => {
